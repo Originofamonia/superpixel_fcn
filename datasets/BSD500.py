@@ -1,18 +1,20 @@
 from __future__ import division
-import os.path
-from .listdataset import  ListDataset
-
+import os
+import sys
+import cv2
 import numpy as np
+
+from .listdataset import  ListDataset
 import flow_transforms
 
-try:
-    import cv2
-except ImportError as e:
-    import warnings
-    with warnings.catch_warnings():
-        warnings.filterwarnings("default", category=ImportWarning)
-        warnings.warn("failed to load openCV, which is needed"
-                      "for KITTI which uses 16bit PNG images", ImportWarning)
+# try:
+#     import cv2
+# except ImportError as e:
+#     import warnings
+#     with warnings.catch_warnings():
+#         warnings.filterwarnings("default", category=ImportWarning)
+#         warnings.warn("failed to load openCV, which is needed"
+#                       "for KITTI which uses 16bit PNG images", ImportWarning)
 
 '''
 Data load for bsds500 dataset:

@@ -7,12 +7,6 @@ from glob import glob
 from joblib import Parallel, delayed
 import matplotlib.pyplot as plt
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default="", help="where the filtered dataset is stored")
-parser.add_argument("--dump_root", type=str, default="", help="Where to dump the data")
-parser.add_argument("--b_filter", type=bool, default=False, help="we do not use this in our paper")
-parser.add_argument("--num_threads", type=int, default=4, help="number of threads to use")
-args = parser.parse_args()
 
 '''
 Extract each pair of image and label from .mat to generagte the data for TRAINING and VALIDATION
@@ -28,8 +22,8 @@ March. 1st 2019
 
 def make_dataset(dir):
     cwd = os.getcwd()
-    train_list_path = cwd + '/train.txt'
-    val_list_path =  cwd + '/val.txt'
+    train_list_path = os.path.join(cwd, 'data_preprocessing/train.txt')
+    val_list_path =  os.path.join(cwd, 'data_preprocessing/val.txt')
     train_list = []
     val_list = []
 
@@ -113,8 +107,8 @@ def BSD_loader(path_imgs, path_label, b_filter=False):
 
     return img, gtseg_lst
 
-def dump_example(n, n_total, dataType, img_path):
-    global args
+def dump_example(args,n, n_total, dataType, img_path):
+    # global args
     if n % 100 == 0:
         print('Progress {0} {1}/{2}....' .format (dataType,n, n_total))
 
@@ -157,8 +151,14 @@ def dump_example(n, n_total, dataType, img_path):
 
 
 def main():
-    datadir = args.dataset
-    train_list, val_list = make_dataset(datadir)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, default="data/", help="where the filtered dataset is stored")
+    parser.add_argument("--dump_root", type=str, default="data/bsd500_processed/", help="Where to dump the data")
+    parser.add_argument("--b_filter", type=bool, default=False, help="we do not use this in our paper")
+    parser.add_argument("--num_threads", type=int, default=4, help="number of threads to use")
+    args = parser.parse_args()
+    # datadir = args.dataset
+    train_list, val_list = make_dataset(args.dataset)
 
     dump_pth = os.path.abspath(args.dump_root)
     print("data will be saved to {}".format(dump_pth))
@@ -167,8 +167,8 @@ def main():
     #     dump_example(n, len(train_list),'train', train_samp)
 
     # mutil-thread running for speed
-    Parallel(n_jobs=args.num_threads)(delayed(dump_example)(n, len(train_list),'train', train_samp) for n, train_samp in enumerate(train_list))
-    Parallel(n_jobs=args.num_threads)(delayed(dump_example)(n, len(train_list),'val', val_samp) for n, val_samp in enumerate(val_list))
+    Parallel(n_jobs=args.num_threads)(delayed(dump_example)(args,n, len(train_list),'train', train_samp) for n, train_samp in enumerate(train_list))
+    Parallel(n_jobs=args.num_threads)(delayed(dump_example)(args,n, len(train_list),'val', val_samp) for n, val_samp in enumerate(val_list))
 
     with open(dump_pth + '/train.txt', 'w') as trnf:
         imfiles = glob(os.path.join(dump_pth, 'train', '*_img.jpg'))

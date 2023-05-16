@@ -39,8 +39,8 @@ parser = argparse.ArgumentParser(description='PyTorch SpixelFCN Training on BSDS
 parser.add_argument('--dataset', metavar='DATASET', default='BSD500',  choices=dataset_names,
                     help='dataset type : ' +  ' | '.join(dataset_names))
 parser.add_argument('--arch', '-a', metavar='ARCH', default='SpixelNet1l_bn',  help='model architecture')
-parser.add_argument('--data', metavar='DIR',default='', help='path to input dataset')
-parser.add_argument('--savepath',default='', help='path to save ckpt')
+parser.add_argument('--data', metavar='DIR',default='data/bsd500_processed/', help='path to input dataset')
+parser.add_argument('--savepath',default='pretrain_ckpt/', help='path to save ckpt')
 
 
 parser.add_argument('--train_img_height', '-t_imgH', default=208,  type=int, help='img height')
@@ -69,11 +69,11 @@ parser.add_argument('--pos_weight', '-p_w', default=0.003, type=float, help='wei
 parser.add_argument('--downsize', default=16, type=float,help='grid cell size for superpixel training ')
 
 # ================= other setting ===================
-parser.add_argument('--gpu', default= '0', type=str, help='gpu id')
+parser.add_argument('--gpu', default= '0,1,2,3', type=str, help='gpu id')
 parser.add_argument('--print_freq', '-p', default=10, type=int,  help='print frequency (step)')
 parser.add_argument('--record_freq', '-rf', default=5, type=int,  help='record frequency (epoch)')
 parser.add_argument('--label_factor', default=5, type=int, help='constant multiplied to label index for viz.')
-parser.add_argument('--pretrained', dest='pretrained', default=None, help='path to pre-trained model')
+parser.add_argument('--pretrained', dest='pretrained', default='pretrain_ckpt/SpixelNet_bsd_ckpt.tar', help='path to pre-trained model')
 parser.add_argument('--no-date', action='store_true',  help='don\'t append date timestamp to folder' )
 
 
@@ -83,7 +83,7 @@ n_iter = 0
 args = parser.parse_args()
 
 # !----- NOTE the current code does not support cpu training -----!
-os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+# os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 if torch.cuda.is_available():
     device = torch.device("cuda")
 else:
@@ -221,7 +221,7 @@ def main():
             }
 
         if (iteration) >= (args.milestones[-1] + args.additional_step):
-            save_checkpoint(rec_dict, is_best =False, filename='%d_step.tar' % iteration)
+            save_checkpoint(rec_dict, is_best =False, filename='%d_step.pt' % iteration)
             print("Train finished!")
             break
 
@@ -411,10 +411,10 @@ def validate(val_loader, model, epoch, val_writer, init_spixl_map_idx, xy_feat):
     return total_loss.avg, losses_sem.avg
 
 
-def save_checkpoint(state, is_best, filename='checkpoint.tar'):
+def save_checkpoint(state, is_best, filename='checkpoint.pt'):
     torch.save(state, os.path.join(save_path,filename))
     if is_best:
-        shutil.copyfile(os.path.join(save_path,filename), os.path.join(save_path,'model_best.tar'))
+        shutil.copyfile(os.path.join(save_path,filename), os.path.join(save_path,'model_best.pt'))
 
 
 if __name__ == '__main__':

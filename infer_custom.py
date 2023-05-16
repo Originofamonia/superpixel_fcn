@@ -4,8 +4,9 @@ import torch.backends.cudnn as cudnn
 import models
 import torchvision.transforms as transforms
 import flow_transforms
-from scipy.ndimage import imread
-from scipy.misc import imsave
+# from scipy.ndimage import 
+import imageio
+# from scipy.misc import imread  # imsave
 from loss import *
 import time
 import random
@@ -41,16 +42,16 @@ model_names = sorted(name for name in models.__dict__
 parser = argparse.ArgumentParser(description='PyTorch SPixelNet inference on a folder of imgs',
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-parser.add_argument('--data_dir', metavar='DIR', default='./demo/inputs', help='path to images folder')
+parser.add_argument('--data_dir', metavar='DIR', default='data/trav/', help='path to images folder')
 parser.add_argument('--data_suffix',  default='jpg', help='suffix of the testing image')
 parser.add_argument('--pretrained', metavar='PTH', help='path to pre-trained model',
                                     default= './pretrain_ckpt/SpixelNet_bsd_ckpt.tar')
-parser.add_argument('--output', metavar='DIR', default= './demo' , help='path to output folder')
+parser.add_argument('--output', metavar='DIR', default= 'output/' , help='path to output folder')
 
 parser.add_argument('--downsize', default=16, type=float,help='superpixel grid cell, must be same as training setting')
 
 parser.add_argument('-nw', '--num_threads', default=1, type=int,  help='num_threads')
-parser.add_argument('-b', '--batch-size', default=1, type=int, metavar='N', help='mini-batch size')
+parser.add_argument('-b', '--batch_size', default=1, type=int, metavar='N', help='mini-batch size')
 
 args = parser.parse_args()
 
@@ -69,7 +70,7 @@ def test(args, model, img_paths, save_path, idx):
     imgId = os.path.basename(img_file)[:-4]
 
     # may get 4 channel (alpha channel) for some format
-    img_ = imread(load_path)[:, :, :3]
+    img_ = imageio.v2.imread(load_path)[:, :, :3]  # [480,640,3]
     H, W, _ = img_.shape
     H_, W_  = int(np.ceil(H/16.)*16), int(np.ceil(W/16.)*16)
 
@@ -103,7 +104,7 @@ def test(args, model, img_paths, save_path, idx):
 
     mean_values = torch.tensor([0.411, 0.432, 0.45], dtype=img1.cuda().unsqueeze(0).dtype).view(3, 1, 1)
     spixel_viz, spixel_label_map = get_spixel_image((ori_img + mean_values).clamp(0, 1), ori_sz_spixel_map.squeeze(), n_spixels= n_spixel,  b_enforce_connect=True)
-
+    np.save(os.path.join(save_path, 'spixel_viz', imgId + '_sPixel.npy'), spixel_label_map)
     # ************************ Save all result********************************************
     # save img, uncomment it if needed
     # if not os.path.isdir(os.path.join(save_path, 'img')):
@@ -117,7 +118,9 @@ def test(args, model, img_paths, save_path, idx):
     if not os.path.isdir(os.path.join(save_path, 'spixel_viz')):
         os.makedirs(os.path.join(save_path, 'spixel_viz'))
     spixl_save_name = os.path.join(save_path, 'spixel_viz', imgId + '_sPixel.png')
-    imsave(spixl_save_name, spixel_viz.transpose(1, 2, 0))
+    spixel_viz *= 255
+    spixel_viz = spixel_viz.astype(np.uint8)
+    imageio.imsave(spixl_save_name, spixel_viz.transpose(1, 2, 0))  # spixel_viz: [3,480,640]
 
     # save the unique maps as csv, uncomment it if needed
     # if not os.path.isdir(os.path.join(save_path, 'map_csv')):
@@ -164,6 +167,7 @@ def main():
       time = test(args, model, tst_lst, save_path, n)
       mean_time += time
     print("avg_time per img: %.3f"%(mean_time/len(tst_lst)))
+
 
 if __name__ == '__main__':
     main()

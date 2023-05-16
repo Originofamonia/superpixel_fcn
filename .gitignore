@@ -1,0 +1,8 @@
+data/
+output/
+demo/
+pretrain_ckpt/
+__pycache__/
+third_party/cython/build/
+third_party/cython/Connectivity.egg-info/
+third_party/cython/dist/

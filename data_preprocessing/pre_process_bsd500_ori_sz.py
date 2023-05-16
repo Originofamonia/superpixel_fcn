@@ -11,8 +11,8 @@ Convert .mat data to the image and label data for test
 
 '''
 parser = argparse.ArgumentParser()
-parser.add_argument("--dataset", type=str, default='', help="where the dataset is stored")
-parser.add_argument("--dump_root", type=str, default="", help="Where to dump the data")
+parser.add_argument("--dataset", type=str, default='data/', help="where the dataset is stored")
+parser.add_argument("--dump_root", type=str, default="data/bsd500_processed/", help="Where to dump the data")
 parser.add_argument("--num_threads", type=int, default=4, help="number of threads to use")
 args = parser.parse_args()
 
@@ -30,7 +30,7 @@ Note, the image.jpg and gt .mat is copy from the ssn_superpixels-master
 
 def make_dataset(dir):
     cwd = os.getcwd()
-    tst_list_path = os.path.join(cwd, 'test.txt')
+    tst_list_path = os.path.join(cwd, 'data_preprocessing/test.txt')
     tst_list = []
 
     try:
